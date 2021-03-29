@@ -7,7 +7,12 @@ class OutOfStock(Exception):
     ...
 
 
-@dataclass(frozen=True)
+# `Frozen=True` is used in the original book, and I personally prefer this scheme.
+# But SQLALCHEMY causes https://github.com/cosmicpython/code/issues/17.
+#
+# The recommended solution is https://stackoverflow.com/questions/61419449.
+# But I don't think this is a clean approach, so I use `unsafe_hash=True` to resolve it.
+@dataclass(unsafe_hash=True)
 class OrderLine:
     order_id: str
     sku: str
