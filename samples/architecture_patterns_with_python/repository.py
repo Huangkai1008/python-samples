@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Protocol
 
 from sqlalchemy.orm import Session
 
@@ -32,3 +32,8 @@ class SQLAlchemyRepository(AbstractRepository):
 
     def list(self) -> List[Batch]:
         return self.session.query(Batch).all()
+
+
+class AbstractSession(Protocol):
+    def commit(self) -> None:
+        ...
