@@ -47,7 +47,7 @@ def test_uow_can_retrieve_a_batch_and_allocate_to_it(
 
     uow = SQLAlchemyUnitOfWork(session_factory)
     with uow:
-        batch = uow.batches.get(reference='batch1')
+        batch = uow.batches.get('batch1')
         line = OrderLine('o1', 'HIPSTER-WORKBENCH', 10)
         batch.allocate(line)
         uow.commit()

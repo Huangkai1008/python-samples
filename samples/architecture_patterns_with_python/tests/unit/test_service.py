@@ -1,11 +1,14 @@
-from typing import Iterable, List, Optional, Set
+from typing import Iterable, Optional, Set
 
 import pytest
 
 from samples.architecture_patterns_with_python.allocation.adapter.repository import (
     AbstractRepository,
 )
-from samples.architecture_patterns_with_python.allocation.domain.model import Batch
+from samples.architecture_patterns_with_python.allocation.domain.model import (
+    Batch,
+    Product,
+)
 from samples.architecture_patterns_with_python.allocation.services import service
 from samples.architecture_patterns_with_python.allocation.services.service import (
     InvalidSKU,
@@ -17,22 +20,19 @@ from samples.architecture_patterns_with_python.allocation.services.unit_of_work 
 
 
 class FakeRepository(AbstractRepository):
-    def __init__(self, batches: Iterable[Batch]) -> None:
-        self._batches: Set[Batch] = set(batches)
+    def __init__(self, products: Iterable[Product]) -> None:
+        self._products: Set[Product] = set(products)
 
-    def add(self, batch: Batch) -> None:
-        self._batches.add(batch)
+    def add(self, product: Product) -> None:
+        self._products.add(product)
 
-    def get(self, reference: str) -> Optional[Batch]:
-        return next(b for b in self._batches if b.reference == reference)
-
-    def list(self) -> List[Batch]:
-        return list(self._batches)
+    def get(self, sku: str) -> Optional[Product]:
+        return next((p for p in self._products if p.sku == sku), None)
 
 
 class FakeUnitOfWork(AbstractUnitOfWork):
     def __init__(self) -> None:
-        self.batches = FakeRepository([])
+        self.products = FakeRepository([])
         self.committed: bool = False
 
     def commit(self) -> None:
@@ -42,20 +42,22 @@ class FakeUnitOfWork(AbstractUnitOfWork):
         pass
 
 
-class FakeSession:
-    committed: bool = False
-
-    def commit(self) -> None:
-        self.committed = True
-
-
-def test_add_batch() -> None:
+def test_add_batch_for_new_product() -> None:
     uow = FakeUnitOfWork()
 
     service.add_batch('b1', 'COMPLICATED-LAMP', 100, None, uow)
 
-    assert uow.batches.get('b1') is not None
+    assert uow.products.get('COMPLICATED-LAMP') is not None
     assert uow.committed
+
+
+def test_add_batch_for_existing_product() -> None:
+    uow = FakeUnitOfWork()
+
+    service.add_batch('b1', 'GARISH-RUG', 100, None, uow)
+    service.add_batch('b2', 'GARISH-RUG', 99, None, uow)
+
+    assert 'b2' in [b.reference for b in uow.products.get('GARISH-RUG').batches]
 
 
 def test_allocate_returns_allocation() -> None:

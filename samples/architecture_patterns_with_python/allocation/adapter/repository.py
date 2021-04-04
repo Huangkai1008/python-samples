@@ -1,22 +1,18 @@
 from abc import ABCMeta, abstractmethod
-from typing import List, Optional, Protocol
+from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from samples.architecture_patterns_with_python.allocation.domain.model import Batch
+from samples.architecture_patterns_with_python.allocation.domain.model import Product
 
 
 class AbstractRepository(metaclass=ABCMeta):
     @abstractmethod
-    def add(self, batch: Batch) -> None:
+    def add(self, product: Product) -> None:
         ...
 
     @abstractmethod
-    def get(self, reference: str) -> Optional[Batch]:
-        ...
-
-    @abstractmethod
-    def list(self) -> List[Batch]:
+    def get(self, sku: str) -> Optional[Product]:
         ...
 
 
@@ -24,16 +20,8 @@ class SQLAlchemyRepository(AbstractRepository):
     def __init__(self, session: Session) -> None:
         self.session: Session = session
 
-    def add(self, batch: Batch) -> None:
-        self.session.add(batch)
+    def add(self, product: Product) -> None:
+        self.session.add(product)
 
-    def get(self, reference: str) -> Optional[Batch]:
-        return self.session.query(Batch).filter_by(reference=reference).first()
-
-    def list(self) -> List[Batch]:
-        return self.session.query(Batch).all()
-
-
-class AbstractSession(Protocol):
-    def commit(self) -> None:
-        ...
+    def get(self, sku: str) -> Optional[Product]:
+        return self.session.query(Product).filter_by(sku=sku).first()

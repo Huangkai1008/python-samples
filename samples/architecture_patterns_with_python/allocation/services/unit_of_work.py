@@ -14,7 +14,7 @@ from samples.architecture_patterns_with_python.allocation.adapter.repository imp
 
 
 class AbstractUnitOfWork(ABC):
-    batches: AbstractRepository
+    products: AbstractRepository
 
     @abstractmethod
     def commit(self) -> None:
@@ -39,7 +39,8 @@ class AbstractUnitOfWork(ABC):
 DEFAULT_SESSION_FACTORY = sessionmaker(
     bind=create_engine(
         config.get_database_uri(),
-    )
+    ),
+    isolation_level='REPEATABLE READ',
 )
 
 
