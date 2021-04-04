@@ -39,8 +39,8 @@ class AbstractUnitOfWork(ABC):
 DEFAULT_SESSION_FACTORY = sessionmaker(
     bind=create_engine(
         config.get_database_uri(),
+        isolation_level='REPEATABLE READ',
     ),
-    isolation_level='REPEATABLE READ',
 )
 
 
@@ -56,7 +56,7 @@ class SQLAlchemyUnitOfWork(AbstractUnitOfWork):
 
     def __enter__(self) -> Self:
         self.session: Session = self.session_factory()
-        self.batches = SQLAlchemyRepository(self.session)
+        self.products = SQLAlchemyRepository(self.session)
         return super().__enter__()
 
     def __exit__(

@@ -5,10 +5,7 @@ import pytest
 from samples.architecture_patterns_with_python.allocation.adapter.repository import (
     AbstractRepository,
 )
-from samples.architecture_patterns_with_python.allocation.domain.model import (
-    Batch,
-    Product,
-)
+from samples.architecture_patterns_with_python.allocation.domain.model import Product
 from samples.architecture_patterns_with_python.allocation.services import service
 from samples.architecture_patterns_with_python.allocation.services.service import (
     InvalidSKU,

@@ -1,5 +1,8 @@
+import threading
+import time
+import traceback
 from datetime import date
-from typing import Optional
+from typing import List, Optional
 
 import pytest
 from sqlalchemy import text
@@ -9,11 +12,25 @@ from samples.architecture_patterns_with_python.allocation.domain.model import Or
 from samples.architecture_patterns_with_python.allocation.services.unit_of_work import (
     SQLAlchemyUnitOfWork,
 )
+from samples.architecture_patterns_with_python.tests.random_refs import (
+    random_batch_ref,
+    random_order_id,
+    random_sku,
+)
 
 
 def insert_batch(
-    session: Session, ref: str, sku: str, qty: int, eta: Optional[date]
+    session: Session,
+    ref: str,
+    sku: str,
+    qty: int,
+    eta: Optional[date],
+    product_version: int = 1,
 ) -> None:
+    session.execute(
+        text("INSERT INTO product (sku, version_number) VALUES (:sku, :version)"),
+        dict(sku=sku, version=product_version),
+    )
     session.execute(
         text(
             "INSERT INTO batch (reference, sku, _purchased_qty, eta)"
@@ -47,9 +64,9 @@ def test_uow_can_retrieve_a_batch_and_allocate_to_it(
 
     uow = SQLAlchemyUnitOfWork(session_factory)
     with uow:
-        batch = uow.batches.get('batch1')
+        product = uow.products.get('HIPSTER-WORKBENCH')
         line = OrderLine('o1', 'HIPSTER-WORKBENCH', 10)
-        batch.allocate(line)
+        product.allocate(line)
         uow.commit()
 
     batch_ref = get_allocated_batch_ref(session, 'o1', 'HIPSTER-WORKBENCH')
@@ -79,3 +96,56 @@ def test_rolls_back_on_error(session_factory: sessionmaker) -> None:
     new_session = session_factory()
     rows = list(new_session.execute(text('SELECT * FROM "batch"')))
     assert rows == []
+
+
+def try_to_allocate(order_id: str, sku: str, exceptions: List[Exception]) -> None:
+    line = OrderLine(order_id, sku, 10)
+    try:
+        with SQLAlchemyUnitOfWork() as uow:
+            product = uow.products.get(sku)
+            product.allocate(line)
+            time.sleep(0.2)
+            uow.commit()
+    except Exception as e:
+        print(traceback.format_exc())
+        exceptions.append(e)
+
+
+@pytest.mark.skip('Use MySQL instead')
+def test_concurrent_updates_to_version_are_not_allowed(
+    session_factory: sessionmaker,
+) -> None:
+    sku, batch = random_sku(), random_batch_ref()
+    session = session_factory()
+    insert_batch(session, batch, sku, 100, eta=None, product_version=1)
+    session.commit()
+
+    order1, order2 = random_order_id('1'), random_order_id('2')
+    exceptions = []
+    t1 = threading.Thread(target=lambda: try_to_allocate(order1, sku, exceptions))
+    t2 = threading.Thread(target=lambda: try_to_allocate(order2, sku, exceptions))
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()
+
+    [[version]] = session.execute(
+        text("SELECT version_number FROM product WHERE sku=:sku"),
+        dict(sku=sku),
+    )
+    assert version == 2
+    [exception] = exceptions
+    assert 'could not serialize access due to concurrent update' in str(exception)
+
+    orders = session.execute(
+        text(
+            "SELECT order_id FROM allocation"
+            " JOIN batch ON allocation.batch_id = batches.id"
+            " JOIN order_line ON allocation.order_line_id = order_line.id"
+            " WHERE order_line.sku=:sku"
+        ),
+        dict(sku=sku),
+    )
+    assert orders.rowcount == 1
+    with SQLAlchemyUnitOfWork() as uow:
+        uow.session.execute(text('select 1'))
