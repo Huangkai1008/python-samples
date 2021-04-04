@@ -1,16 +1,19 @@
 import time
 from pathlib import Path
-from typing import Any, Generator, List, Optional
+from typing import Generator, Optional
 
 import pytest
 import requests
 from requests import Response
-from sqlalchemy import Connection, Engine, create_engine, text
+from sqlalchemy import Connection, Engine, create_engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, clear_mappers, sessionmaker
 
 from samples.architecture_patterns_with_python import config
-from samples.architecture_patterns_with_python.allocation.adapter.orm import mapper_registry, start_mappers
+from samples.architecture_patterns_with_python.allocation.adapter.orm import (
+    mapper_registry,
+    start_mappers,
+)
 
 
 @pytest.fixture
@@ -21,10 +24,15 @@ def in_memory_db() -> Engine:
 
 
 @pytest.fixture
-def session(in_memory_db: Engine) -> Generator[Session, None, None]:
+def session_factory(in_memory_db: Engine) -> Generator[sessionmaker, None, None]:
     start_mappers()
-    yield sessionmaker(bind=in_memory_db)()
+    yield sessionmaker(bind=in_memory_db)
     clear_mappers()
+
+
+@pytest.fixture
+def session(session_factory: sessionmaker) -> Session:
+    return session_factory()
 
 
 def wait_for_database_to_come_up(engine: Engine) -> Optional[Connection]:
@@ -61,47 +69,6 @@ def database_session(database: Engine) -> Generator[Session, None, None]:
     start_mappers()
     yield sessionmaker(bind=database)()
     clear_mappers()
-
-
-@pytest.fixture
-def add_stock(database_session: Session) -> Any:
-    batches_added = set()
-    skus_added = set()
-
-    def _add_stock(lines: List) -> None:
-        for ref, sku, qty, eta in lines:
-            database_session.execute(
-                text(
-                    "INSERT INTO batch (reference, sku, _purchased_qty, eta)"
-                    " VALUES (:ref, :sku, :qty, :eta)"
-                ),
-                dict(ref=ref, sku=sku, qty=qty, eta=eta),
-            )
-            [[batch_id]] = database_session.execute(
-                text("SELECT id FROM batch WHERE reference=:ref AND sku=:sku"),
-                dict(ref=ref, sku=sku),
-            )
-            batches_added.add(batch_id)
-            skus_added.add(sku)
-        database_session.commit()
-
-    yield _add_stock
-
-    for batch_id in batches_added:
-        database_session.execute(
-            text("DELETE FROM allocation WHERE batch_id=:batch_id"),
-            dict(batch_id=batch_id),
-        )
-        database_session.execute(
-            text("DELETE FROM batch WHERE id=:batch_id"),
-            dict(batch_id=batch_id),
-        )
-    for sku in skus_added:
-        database_session.execute(
-            text("DELETE FROM order_line WHERE sku=:sku"),
-            dict(sku=sku),
-        )
-        database_session.commit()
 
 
 @pytest.fixture

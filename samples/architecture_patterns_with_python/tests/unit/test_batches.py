@@ -1,7 +1,10 @@
 from datetime import date
 from typing import Tuple
 
-from samples.architecture_patterns_with_python.allocation.domain.model import Batch, OrderLine
+from samples.architecture_patterns_with_python.allocation.domain.model import (
+    Batch,
+    OrderLine,
+)
 
 
 def make_batch_and_line(

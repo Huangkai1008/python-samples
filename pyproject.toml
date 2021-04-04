@@ -27,7 +27,7 @@ coverage = "^7.2.2"
 
 
 [tool.poetry.group.architecture-patterns-with-python.dependencies]
-sqlalchemy = "^2.0.7"
+sqlalchemy = {extras = ["mypy"], version = "^2.0.7"}
 
 [tool.isort]
 profile = "black"
