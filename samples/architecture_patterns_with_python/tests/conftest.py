@@ -52,7 +52,7 @@ def wait_for_webapp_to_come_up() -> Response:
 def database() -> Engine:
     engine = create_engine(config.get_database_uri())
     wait_for_database_to_come_up(engine)
-    mapper_registry.metadata.create_all(bind=engine)
+    mapper_registry.metadata.create_all(engine)
     return engine
 
 
@@ -72,7 +72,7 @@ def add_stock(database_session: Session) -> Any:
         for ref, sku, qty, eta in lines:
             database_session.execute(
                 text(
-                    "INSERT INTO batch (reference, sku, _purchased_quantity, eta)"
+                    "INSERT INTO batch (reference, sku, _purchased_qty, eta)"
                     " VALUES (:ref, :sku, :qty, :eta)"
                 ),
                 dict(ref=ref, sku=sku, qty=qty, eta=eta),

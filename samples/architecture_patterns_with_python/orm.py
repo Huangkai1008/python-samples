@@ -39,7 +39,7 @@ def start_mappers() -> None:
         Batch,
         batch,
         properties={
-            '_allocation': relationship(
+            '_allocations': relationship(
                 lines_mapper,
                 secondary=allocation,
                 collection_class=set,
