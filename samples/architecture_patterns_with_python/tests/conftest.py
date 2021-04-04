@@ -10,7 +10,7 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, clear_mappers, sessionmaker
 
 from samples.architecture_patterns_with_python import config
-from samples.architecture_patterns_with_python.orm import mapper_registry, start_mappers
+from samples.architecture_patterns_with_python.allocation.adapter.orm import mapper_registry, start_mappers
 
 
 @pytest.fixture

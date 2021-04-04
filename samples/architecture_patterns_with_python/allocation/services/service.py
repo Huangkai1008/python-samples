@@ -1,8 +1,8 @@
 from typing import Iterable
 
-from samples.architecture_patterns_with_python import model
-from samples.architecture_patterns_with_python.model import Batch, OrderLine
-from samples.architecture_patterns_with_python.repository import (
+from samples.architecture_patterns_with_python.allocation.domain import model
+from samples.architecture_patterns_with_python.allocation.domain.model import Batch, OrderLine
+from samples.architecture_patterns_with_python.allocation.adapter.repository import (
     AbstractRepository,
     AbstractSession,
 )

@@ -2,9 +2,9 @@ from typing import Iterable, List, Optional, Set
 
 import pytest
 
-from samples.architecture_patterns_with_python.model import Batch, OrderLine
-from samples.architecture_patterns_with_python.repository import AbstractRepository
-from samples.architecture_patterns_with_python.service import InvalidSKU, allocate
+from samples.architecture_patterns_with_python.allocation.domain.model import Batch, OrderLine
+from samples.architecture_patterns_with_python.allocation.adapter.repository import AbstractRepository
+from samples.architecture_patterns_with_python.allocation.services.service import InvalidSKU, allocate
 
 
 class FakeRepository(AbstractRepository):

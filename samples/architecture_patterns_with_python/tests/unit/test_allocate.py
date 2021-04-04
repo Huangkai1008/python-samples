@@ -2,7 +2,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from samples.architecture_patterns_with_python.model import (
+from samples.architecture_patterns_with_python.allocation.domain.model import (
     Batch,
     OrderLine,
     OutOfStock,

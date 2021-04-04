@@ -3,7 +3,7 @@ from typing import List, Optional, Protocol
 
 from sqlalchemy.orm import Session
 
-from samples.architecture_patterns_with_python.model import Batch
+from samples.architecture_patterns_with_python.allocation.domain.model import Batch
 
 
 class AbstractRepository(metaclass=ABCMeta):

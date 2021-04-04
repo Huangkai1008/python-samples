@@ -4,8 +4,10 @@ from flask import Flask, request
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from samples.architecture_patterns_with_python import config, orm, repository, service
-from samples.architecture_patterns_with_python.model import OrderLine, OutOfStock
+from samples.architecture_patterns_with_python import config
+from samples.architecture_patterns_with_python.allocation.services import service
+from samples.architecture_patterns_with_python.allocation.adapter import orm, repository
+from samples.architecture_patterns_with_python.allocation.domain.model import OrderLine, OutOfStock
 
 orm.start_mappers()
 get_session = sessionmaker(bind=create_engine(config.get_database_uri()))
