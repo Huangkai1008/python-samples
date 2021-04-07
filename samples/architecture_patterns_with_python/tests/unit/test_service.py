@@ -32,11 +32,11 @@ class FakeUnitOfWork(AbstractUnitOfWork):
         self.products = FakeRepository([])
         self.committed: bool = False
 
-    def commit(self) -> None:
+    def _commit(self) -> None:
         self.committed = True
 
     def rollback(self) -> None:
-        pass
+        ...
 
 
 def test_add_batch_for_new_product() -> None:

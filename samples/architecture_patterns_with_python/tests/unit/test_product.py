@@ -1,7 +1,5 @@
 from datetime import date, timedelta
 
-import pytest
-
 from samples.architecture_patterns_with_python.allocation.domain.model import (
     Batch,
     OrderLine,
@@ -51,15 +49,16 @@ def test_returns_allocated_batch_ref() -> None:
     assert allocation == in_stock_batch.reference
 
 
-def test_raises_out_of_stock_exception_if_cannot_allocate() -> None:
+def test_record_out_of_stock_event_if_cannot_allocate() -> None:
     batch = Batch('batch1', 'SMALL-FORK', 10, eta=today)
     product = Product('SMALL-FORK', [batch])
     line = OrderLine('order1', 'SMALL-FORK', 10)
-
     product.allocate(line)
 
-    with pytest.raises(OutOfStock, match='SMALL-FORK'):
-        product.allocate(OrderLine('order2', 'SMALL-FORK', 1))
+    allocation = product.allocate(OrderLine('order2', 'SMALL-FORK', 1))
+
+    assert product.events[-1] == OutOfStock(sku='SMALL-FORK')
+    assert allocation is None
 
 
 def test_increments_version_number() -> None:

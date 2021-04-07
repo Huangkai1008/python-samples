@@ -2,9 +2,10 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any, List, Optional, Set
 
-
-class OutOfStock(Exception):
-    ...
+from samples.architecture_patterns_with_python.allocation.domain.event import (
+    Event,
+    OutOfStock,
+)
 
 
 # `Frozen=True` is used in the original book, and I personally prefer this scheme.
@@ -79,12 +80,14 @@ class Product:
         self.sku: str = sku
         self.batches: List[Batch] = batches
         self.version_number: int = version_number
+        self.events: List[Event] = []
 
-    def allocate(self, line: OrderLine) -> str:
+    def allocate(self, line: OrderLine) -> Optional[str]:
         try:
             batch = next(b for b in sorted(self.batches) if b.can_allocate(line))
             batch.allocate(line)
             self.version_number += 1
             return batch.reference
         except StopIteration:
-            raise OutOfStock(f'Out of stock for sku {line.sku}')
+            self.events.append(OutOfStock(self.sku))
+            return None

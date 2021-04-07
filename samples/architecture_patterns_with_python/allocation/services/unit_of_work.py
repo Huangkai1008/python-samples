@@ -9,20 +9,31 @@ from typing_extensions import Self
 from samples.architecture_patterns_with_python import config
 from samples.architecture_patterns_with_python.allocation.adapter.repository import (
     AbstractRepository,
+    ProductRepository,
     SQLAlchemyRepository,
 )
+from samples.architecture_patterns_with_python.allocation.services import message_bus
 
 
 class AbstractUnitOfWork(ABC):
     products: AbstractRepository
 
-    @abstractmethod
     def commit(self) -> None:
+        self._commit()
+
+    @abstractmethod
+    def _commit(self) -> None:
         ...
 
     @abstractmethod
     def rollback(self) -> None:
         ...
+
+    def push_events(self) -> None:
+        for product in self.products.seen:
+            while product.events:
+                event = product.events.pop(0)
+                message_bus.handle(event)
 
     def __enter__(self) -> Self:
         return self
@@ -48,7 +59,7 @@ class SQLAlchemyUnitOfWork(AbstractUnitOfWork):
     def __init__(self, session_factory: sessionmaker = DEFAULT_SESSION_FACTORY) -> None:
         self.session_factory: sessionmaker = session_factory
 
-    def commit(self) -> None:
+    def _commit(self) -> None:
         self.session.commit()
 
     def rollback(self) -> None:
@@ -56,7 +67,7 @@ class SQLAlchemyUnitOfWork(AbstractUnitOfWork):
 
     def __enter__(self) -> Self:
         self.session: Session = self.session_factory()
-        self.products = SQLAlchemyRepository(self.session)
+        self.products = ProductRepository(SQLAlchemyRepository(self.session))
         return super().__enter__()
 
     def __exit__(

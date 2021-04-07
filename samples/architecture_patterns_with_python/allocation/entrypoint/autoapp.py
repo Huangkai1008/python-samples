@@ -7,7 +7,6 @@ from sqlalchemy.orm import sessionmaker
 
 from samples.architecture_patterns_with_python import config
 from samples.architecture_patterns_with_python.allocation.adapter import orm
-from samples.architecture_patterns_with_python.allocation.domain.model import OutOfStock
 from samples.architecture_patterns_with_python.allocation.services import service
 from samples.architecture_patterns_with_python.allocation.services.unit_of_work import (
     SQLAlchemyUnitOfWork,
@@ -42,7 +41,7 @@ def allocate_endpoint() -> Any:
             request.json['qty'],
             SQLAlchemyUnitOfWork(),
         )
-    except (OutOfStock, service.InvalidSKU) as e:
+    except service.InvalidSKU as e:
         return {'message': str(e)}, 400
 
     return {'batch_ref': batch_ref}, 201
