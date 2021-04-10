@@ -5,9 +5,10 @@ import pytest
 from samples.architecture_patterns_with_python.allocation.adapter.repository import (
     AbstractRepository,
 )
+from samples.architecture_patterns_with_python.allocation.domain.command import CreateBatch
 from samples.architecture_patterns_with_python.allocation.domain.model import Product
-from samples.architecture_patterns_with_python.allocation.services import service
-from samples.architecture_patterns_with_python.allocation.services.service import (
+from samples.architecture_patterns_with_python.allocation.services import message_bus
+from samples.architecture_patterns_with_python.allocation.services.handlers import (
     InvalidSKU,
     allocate,
 )
@@ -26,6 +27,12 @@ class FakeRepository(AbstractRepository):
     def get(self, sku: str) -> Optional[Product]:
         return next((p for p in self._products if p.sku == sku), None)
 
+    def get_by_batch_ref(self, batch_ref: str) -> Optional[Product]:
+        return next(
+            (p for p in self._products for b in p.batches if b.reference == batch_ref),
+            None,
+        )
+
 
 class FakeUnitOfWork(AbstractUnitOfWork):
     def __init__(self) -> None:
@@ -39,22 +46,39 @@ class FakeUnitOfWork(AbstractUnitOfWork):
         ...
 
 
-def test_add_batch_for_new_product() -> None:
-    uow = FakeUnitOfWork()
+class TestAddBatch:
+    def test_for_new_product(self) -> None:
+        uow = FakeUnitOfWork()
 
-    service.add_batch('b1', 'COMPLICATED-LAMP', 100, None, uow)
+        message_bus.handle(
+            CreateBatch('b1', 'COMPLICATED-LAMP', 100, None), uow
+        )
 
-    assert uow.products.get('COMPLICATED-LAMP') is not None
-    assert uow.committed
+    def test_for_existing_product(self) -> None:
+        uow = FakeUnitOfWork()
+
+        message_bus.handle(
+            CreateBatch('b1', 'GARISH-RUG', 100, None), uow,
+        )
+        message_bus.handle(
+            CreateBatch('b2', 'GARISH-RUG', 99, None), uow
+        )
+
+        assert 'b2' in [b.reference for b in uow.products.get('GARISH-RUG').batches]
 
 
-def test_add_batch_for_existing_product() -> None:
-    uow = FakeUnitOfWork()
+class TestAllocates:
+    def test_allocates(self) -> None:
+        uow = FakeUnitOfWork()
 
-    service.add_batch('b1', 'GARISH-RUG', 100, None, uow)
-    service.add_batch('b2', 'GARISH-RUG', 99, None, uow)
+        message_bus.handle(
+            CreateBatch('b1', 'COMPLICATED-LAMP', 100, None), uow
+        )
 
-    assert 'b2' in [b.reference for b in uow.products.get('GARISH-RUG').batches]
+        service.add_batch('b1', 'COMPLICATED-LAMP', 100, None, uow)
+        result = service.allocate('o1', 'COMPLICATED-LAMP', 10, uow)
+
+        assert result == 'b1'
 
 
 def test_allocate_returns_allocation() -> None:

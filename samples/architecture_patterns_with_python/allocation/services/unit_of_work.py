@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from traceback import TracebackException
-from typing import Optional
+from typing import Generator, Optional
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -12,7 +12,9 @@ from samples.architecture_patterns_with_python.allocation.adapter.repository imp
     ProductRepository,
     SQLAlchemyRepository,
 )
-from samples.architecture_patterns_with_python.allocation.services import message_bus
+from samples.architecture_patterns_with_python.allocation.services.message_bus import (
+    Message,
+)
 
 
 class AbstractUnitOfWork(ABC):
@@ -29,11 +31,10 @@ class AbstractUnitOfWork(ABC):
     def rollback(self) -> None:
         ...
 
-    def push_events(self) -> None:
+    def collect_new_events(self) -> Generator[Message, None, None]:
         for product in self.products.seen:
             while product.events:
-                event = product.events.pop(0)
-                message_bus.handle(event)
+                yield product.events.pop(0)
 
     def __enter__(self) -> Self:
         return self

@@ -2,9 +2,10 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any, List, Optional, Set
 
-from samples.architecture_patterns_with_python.allocation.domain.event import (
-    Event,
-    OutOfStock,
+from samples.architecture_patterns_with_python.allocation.domain.command import Allocate
+from samples.architecture_patterns_with_python.allocation.domain.event import OutOfStock
+from samples.architecture_patterns_with_python.allocation.services.message_bus import (
+    Message,
 )
 
 
@@ -46,6 +47,9 @@ class Batch:
         if line in self._allocations:
             self._allocations.remove(line)
 
+    def deallocate_one(self) -> OrderLine:
+        return self._allocations.pop()
+
     def can_allocate(self, line: OrderLine) -> bool:
         return self.sku == line.sku and self.available_qty >= line.qty
 
@@ -80,7 +84,7 @@ class Product:
         self.sku: str = sku
         self.batches: List[Batch] = batches
         self.version_number: int = version_number
-        self.events: List[Event] = []
+        self.events: List[Message] = []
 
     def allocate(self, line: OrderLine) -> Optional[str]:
         try:
@@ -91,3 +95,10 @@ class Product:
         except StopIteration:
             self.events.append(OutOfStock(self.sku))
             return None
+
+    def change_batch_quantity(self, ref: str, qty: int) -> None:
+        batch = next(b for b in self.batches if b.reference == ref)
+        batch._purchased_qty = qty
+        while batch.available_qty < 0:
+            line = batch.deallocate_one()
+            self.events.append(Allocate(line.order_id, line.sku, line.qty))
