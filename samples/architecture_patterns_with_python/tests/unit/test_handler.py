@@ -5,7 +5,9 @@ import pytest
 from samples.architecture_patterns_with_python.allocation.adapter.repository import (
     AbstractRepository,
 )
-from samples.architecture_patterns_with_python.allocation.domain.command import CreateBatch
+from samples.architecture_patterns_with_python.allocation.domain.command import (
+    CreateBatch,
+)
 from samples.architecture_patterns_with_python.allocation.domain.model import Product
 from samples.architecture_patterns_with_python.allocation.services import message_bus
 from samples.architecture_patterns_with_python.allocation.services.handlers import (
@@ -50,19 +52,16 @@ class TestAddBatch:
     def test_for_new_product(self) -> None:
         uow = FakeUnitOfWork()
 
-        message_bus.handle(
-            CreateBatch('b1', 'COMPLICATED-LAMP', 100, None), uow
-        )
+        message_bus.handle(CreateBatch('b1', 'COMPLICATED-LAMP', 100, None), uow)
 
     def test_for_existing_product(self) -> None:
         uow = FakeUnitOfWork()
 
         message_bus.handle(
-            CreateBatch('b1', 'GARISH-RUG', 100, None), uow,
+            CreateBatch('b1', 'GARISH-RUG', 100, None),
+            uow,
         )
-        message_bus.handle(
-            CreateBatch('b2', 'GARISH-RUG', 99, None), uow
-        )
+        message_bus.handle(CreateBatch('b2', 'GARISH-RUG', 99, None), uow)
 
         assert 'b2' in [b.reference for b in uow.products.get('GARISH-RUG').batches]
 
@@ -71,9 +70,7 @@ class TestAllocates:
     def test_allocates(self) -> None:
         uow = FakeUnitOfWork()
 
-        message_bus.handle(
-            CreateBatch('b1', 'COMPLICATED-LAMP', 100, None), uow
-        )
+        message_bus.handle(CreateBatch('b1', 'COMPLICATED-LAMP', 100, None), uow)
 
         service.add_batch('b1', 'COMPLICATED-LAMP', 100, None, uow)
         result = service.allocate('o1', 'COMPLICATED-LAMP', 10, uow)
