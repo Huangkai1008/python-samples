@@ -72,4 +72,3 @@ class LargeOrderPromo(Promotion):
         if len(distinct_items) >= 10:
             return order.total() * Decimal('0.07')
         return Decimal('0')
-

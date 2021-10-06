@@ -1,5 +1,4 @@
 import datetime
-
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Optional
@@ -14,6 +13,7 @@ class ResourceType(Enum):
 @dataclass
 class Resource:
     """Media resource description."""
+
     identifier: str
     title: str = '<untitle>'
     creators: list[str] = field(default_factory=list)
@@ -22,4 +22,3 @@ class Resource:
     description: str = ''
     language: str = ''
     subjects: list[str] = field(default_factory=list)
-    
