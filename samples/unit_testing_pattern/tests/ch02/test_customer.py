@@ -1,6 +1,6 @@
+from samples.unit_testing_pattern.customer import Customer
 from samples.unit_testing_pattern.product import Product
 from samples.unit_testing_pattern.store import Store
-from samples.unit_testing_pattern.customer import Customer
 
 
 class TestCustomer:
