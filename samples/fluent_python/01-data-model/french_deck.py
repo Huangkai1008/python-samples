@@ -1,3 +1,5 @@
+"""Example 1-1. A deck as a sequence of playing cards."""
+
 import collections
 
 Card = collections.namedtuple('Card', ['rank', 'suit'])
