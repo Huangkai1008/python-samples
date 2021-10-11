@@ -29,7 +29,7 @@ from typing_extensions import Self
 
 
 class Vector:
-    def __init__(self, x: Optional[float] = 0, y: Optional[float] = 0) -> None:
+    def __init__(self, x: float = 0, y: float = 0) -> None:
         self.x: float = x
         self.y: float = y
 
