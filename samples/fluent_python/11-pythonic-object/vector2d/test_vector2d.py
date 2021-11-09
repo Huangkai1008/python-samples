@@ -10,6 +10,12 @@ class TestVector2d:
         assert v.x == 3
         assert v.y == 4
 
+    def test_vector2d_cannot_set_attributes_directly(self) -> None:
+        v = Vector2d(3, 4)
+
+        with pytest.raises(AttributeError):
+            v.x = 5  # noqa
+
     def test_vector2d_can_be_unpacked_to_a_tuple(self) -> None:
         v = Vector2d(3, 4)
 
@@ -54,3 +60,10 @@ class TestVector2d:
         actual = bool(v)
 
         assert actual == expected
+
+    def test_vector2d_is_hashable(self) -> None:
+        v = Vector2d(3, 4)
+
+        actual = hash(v)
+
+        assert isinstance(actual, int)

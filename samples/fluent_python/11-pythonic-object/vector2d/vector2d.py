@@ -7,14 +7,16 @@ class Vector2d:
     typecode = 'd'
 
     def __init__(self, x: float, y: float) -> None:
-        self.x: float = x
-        self.y: float = y
+        self._x: float = x
+        self._y: float = y
 
-    @classmethod
-    def from_bytes(cls, octets: bytes) -> 'Vector2d':
-        typecode = chr(octets[0])
-        memv = memoryview(octets[1:]).cast(typecode)
-        return cls(*memv)
+    @property
+    def x(self) -> float:
+        return self._x
+
+    @property
+    def y(self) -> float:
+        return self._y
 
     def __iter__(self) -> Generator[float, None, None]:
         yield self.x
@@ -39,3 +41,12 @@ class Vector2d:
 
     def __bool__(self) -> bool:
         return bool(abs(self))
+
+    def __hash__(self) -> int:
+        return hash((self.x, self.y))
+
+    @classmethod
+    def from_bytes(cls, octets: bytes) -> 'Vector2d':
+        typecode = chr(octets[0])
+        memv = memoryview(octets[1:]).cast(typecode)
+        return cls(*memv)
